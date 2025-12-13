@@ -1,131 +1,98 @@
-<x-layouts.app title="Tambah Dokter">
-    <div class="container-fluid px-4 mt-4">
-        <div class="row">
-            <div class="col-lg-8 offset-lg-2">
-                <h1 class="mb-4">Tambah Dokter</h1>
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        {{-- Alert sukses atau gagal --}}
-                        @if (session('message'))
-                            <div class="alert alert-{{ session('type', 'success') }} alert-dismissible fade show" role="alert">
-                                {{ session('message') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        @endif
+<x-layouts.app>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header Section -->
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold text-primary mb-2">Edit Data Poli</h2>
+                    <p class="text-muted">Perbarui informasi poli dengan data terbaru</p>
+                    <hr class="w-25 mx-auto border-primary opacity-75">
+                </div>
 
-                        <form action="{{ route('dokter.store') }}" method="POST">
+                <!-- Card Form -->
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-5">
+                        <form action="{{ route('polis.update', $poli->id) }}" method="POST">
                             @csrf
-                            <div class="row">
-                                {{-- Nama Dokter --}}
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="nama" class="form-label">Nama Dokter <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control @error('nama') is-invalid @enderror" id="nama"
-                                            name="nama" value="{{ old('nama') }}" required>
-                                        @error('nama')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
+                            @method('PUT')
 
-                                {{-- Email --}}
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                                        <input type="email" class="form-control @error('email') is-invalid @enderror"
-                                            id="email" name="email" value="{{ old('email') }}" required>
-                                        @error('email')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                {{-- No KTP --}}
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="no_ktp" class="form-label">No KTP <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control @error('no_ktp') is-invalid @enderror"
-                                            id="no_ktp" name="no_ktp" value="{{ old('no_ktp') }}" required>
-                                        @error('no_ktp')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                {{-- No HP --}}
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="no_hp" class="form-label">No HP <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control @error('no_hp') is-invalid @enderror"
-                                            id="no_hp" name="no_hp" value="{{ old('no_hp') }}" required>
-                                        @error('no_hp')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Alamat --}}
-                            <div class="form-group mb-3">
-                                <label for="alamat" class="form-label">Alamat <span class="text-danger">*</span></label>
-                                <textarea required name="alamat" id="alamat"
-                                    class="form-control @error('alamat') is-invalid @enderror">{{ old('alamat') }}</textarea>
-                                @error('alamat')
+                            <!-- Nama Poli -->
+                            <div class="mb-4">
+                                <label for="nama_poli" class="form-label fw-semibold">Nama Poli <span class="text-danger">*</span></label>
+                                <input 
+                                    type="text" 
+                                    id="nama_poli" 
+                                    name="nama_poli"
+                                    class="form-control form-control-lg rounded-3 shadow-sm @error('nama_poli') is-invalid @enderror"
+                                    placeholder="Masukkan nama poli..."
+                                    value="{{ old('nama_poli', $poli->nama_poli) }}"
+                                    required
+                                >
+                                @error('nama_poli')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
-                            {{-- Poli --}}
-                            <div class="form-group mb-3">
-                                <label for="id_poli" class="form-label">Poli <span class="text-danger">*</span></label>
-                                <select name="id_poli" id="id_poli" class="form-control @error('id_poli') is-invalid @enderror" required>
-                                    <option value="" selected>Pilih Poli</option>
-                                    @foreach ($polis as $poli)
-                                        <option value="{{ $poli->id }}" {{ old('id_poli') == $poli->id ? 'selected' : '' }}>
-                                            {{ $poli->nama_poli }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('id_poli')
+                            <!-- Keterangan -->
+                            <div class="mb-4">
+                                <label for="keterangan" class="form-label fw-semibold">Keterangan</label>
+                                <textarea 
+                                    id="keterangan" 
+                                    name="keterangan"
+                                    class="form-control form-control-lg rounded-3 shadow-sm @error('keterangan') is-invalid @enderror"
+                                    placeholder="Tuliskan keterangan singkat..."
+                                    rows="4">{{ old('keterangan', $poli->keterangan) }}</textarea>
+                                @error('keterangan')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
-                            {{-- Password --}}
-                            <div class="form-group mb-4">
-                                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control @error('password') is-invalid @enderror"
-                                    id="password" name="password" placeholder="Minimal 6 karakter" required>
-                                @error('password')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            {{-- Tombol Simpan --}}
-                            <div class="form-group mb-3 text-end">
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-save"></i> Simpan
+                            <!-- Buttons -->
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <a href="{{ route('polis.index') }}" class="btn btn-outline-secondary btn-lg rounded-3 px-4">
+                                    <i class="fas fa-arrow-left me-2"></i> Kembali
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg rounded-3 px-5 shadow-sm">
+                                    <i class="fas fa-save me-2"></i> Simpan Perubahan
                                 </button>
-                                <a href="{{ route('dokter.index') }}" class="btn btn-secondary">Batal</a>
                             </div>
                         </form>
                     </div>
+                </div>
+
+                <!-- Small Footer Text -->
+                <div class="text-center mt-4 text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Pastikan semua data yang diubah sudah benar sebelum menyimpan.
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Script alert otomatis hilang --}}
-    <script>
-        setTimeout(() => {
-            const alert = document.querySelector('.alert');
-            if (alert) {
-                alert.classList.remove('show');
-                alert.classList.add('fade');
-                setTimeout(() => alert.remove(), 500);
-            }
-        }, 2500);
-    </script>
+    <style>
+        /* Smooth fade-in animation */
+        .card {
+            animation: fadeIn 0.6s ease-in-out;
+            background: #ffffff;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            min-height: 100vh;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-control:focus {
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
+        }
+
+        h2 {
+            letter-spacing: 0.5px;
+        }
+    </style>
 </x-layouts.app>
