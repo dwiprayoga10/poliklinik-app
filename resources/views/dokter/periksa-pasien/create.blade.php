@@ -34,11 +34,16 @@
                                             data-harga="{{ $obat->harga }}"
                                             data-stok="{{ $obat->stok }}">
                                             {{ $obat->nama_obat }}
-                                            (stok: {{ $obat->stok }})
+                                            
                                             - Rp{{ number_format($obat->harga) }}
                                         </option>
                                     @endforeach
                                 </select>
+
+                                {{-- INFO STOK HABIS --}}
+                                <small id="stok-habis-info" class="text-danger d-none mt-1">
+                                    Stok obat telah habis dan tidak dapat dipilih.
+                                </small>
                             </div>
 
                             {{-- CATATAN --}}
@@ -82,9 +87,6 @@
     </div>
 </x-layouts.app>
 
-{{-- SWEETALERT2 --}}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 {{-- SCRIPT --}}
 <script>
     const selectObat = document.getElementById('select-obat');
@@ -92,6 +94,7 @@
     const inputBiaya = document.getElementById('biaya_periksa');
     const inputObatJson = document.getElementById('obat_json');
     const totalHargaEl = document.getElementById('total-harga');
+    const stokHabisInfo = document.getElementById('stok-habis-info');
 
     let daftarObat = [];
 
@@ -103,6 +106,8 @@
         const harga = parseInt(opt.dataset.harga || 0);
         const stok  = parseInt(opt.dataset.stok || 0);
 
+        stokHabisInfo.classList.add('d-none');
+
         if (!id || daftarObat.some(o => o.id == id)) {
             selectObat.selectedIndex = 0;
             return;
@@ -110,26 +115,9 @@
 
         // ❌ STOK HABIS
         if (stok === 0) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Stok Habis',
-                text: `Obat "${nama}" sudah habis.`,
-                confirmButtonColor: '#dc3545'
-            });
+            stokHabisInfo.classList.remove('d-none');
             selectObat.selectedIndex = 0;
             return;
-        }
-        
-
-        // ⚠️ STOK MENIPIS
-        if (stok <= 5) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Stok Menipis',
-                html: `Obat <b>${nama}</b> tersisa <b>${stok}</b> unit.`,
-                timer: 2500,
-                showConfirmButton: false
-            });
         }
 
         daftarObat.push({ id, nama, harga });
@@ -166,28 +154,7 @@
     }
 
     function hapusObat(index) {
-        Swal.fire({
-            title: 'Hapus Obat?',
-            text: 'Obat akan dihapus dari daftar.',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Hapus',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                daftarObat.splice(index, 1);
-                renderObat();
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil',
-                    text: 'Obat berhasil dihapus.',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-            }
-        });
+        daftarObat.splice(index, 1);
+        renderObat();
     }
 </script>

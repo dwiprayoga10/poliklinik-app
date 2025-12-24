@@ -45,21 +45,6 @@
                                 </div>
                             </div>
 
-                            {{-- Stok Obat --}}
-                            <div class="mb-3">
-                                <label for="stok" class="form-label">
-                                    Stok Obat <span class="text-danger">*</span>
-                                </label>
-                                <input 
-                                    type="number" 
-                                    id="stok" 
-                                    name="stok" 
-                                    min="0" 
-                                    class="form-control"
-                                    value="{{ old('stok') }}"
-                                    required
-                                >
-                            </div>
 
                             {{-- Harga --}}
                             <div class="mb-3">

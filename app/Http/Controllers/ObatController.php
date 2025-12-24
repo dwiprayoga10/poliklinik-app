@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 
 class ObatController extends Controller
 {
+    /* ===============================
+       CRUD OBAT
+    ================================ */
+
     public function index()
     {
         $obats = Obat::all();
@@ -21,21 +25,21 @@ class ObatController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_obat' => 'required|string',
-            'kemasan'   => 'required|string',
-            'harga'     => 'required|integer',
-            'stok'      => 'nullable|integer|min:0'
+            'nama_obat' => 'required|string|max:255',
+            'kemasan'   => 'required|string|max:100',
+            'harga'     => 'required|integer|min:0',
+            'stok'      => 'nullable|integer|min:0',
         ]);
 
         Obat::create([
             'nama_obat' => $request->nama_obat,
             'kemasan'   => $request->kemasan,
             'harga'     => $request->harga,
-            'stok'      => $request->stok ?? 0
+            'stok'      => $request->stok ?? 0,
         ]);
 
         return redirect()->route('obat.index')
-            ->with('message', 'Data Obat berhasil dibuat')
+            ->with('message', 'Data obat berhasil ditambahkan')
             ->with('type', 'success');
     }
 
@@ -48,20 +52,20 @@ class ObatController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'nama_obat' => 'required|string',
-            'kemasan'   => 'nullable|string',
-            'harga'     => 'required|integer',
+            'nama_obat' => 'required|string|max:255',
+            'kemasan'   => 'required|string|max:100',
+            'harga'     => 'required|integer|min:0',
         ]);
 
         $obat = Obat::findOrFail($id);
         $obat->update([
             'nama_obat' => $request->nama_obat,
             'kemasan'   => $request->kemasan,
-            'harga'     => $request->harga
+            'harga'     => $request->harga,
         ]);
 
         return redirect()->route('obat.index')
-            ->with('message', 'Data Obat berhasil di edit')
+            ->with('message', 'Data obat berhasil diperbarui')
             ->with('type', 'success');
     }
 
@@ -71,77 +75,37 @@ class ObatController extends Controller
         $obat->delete();
 
         return redirect()->route('obat.index')
-            ->with('message', 'Data Obat berhasil dihapus')
+            ->with('message', 'Data obat berhasil dihapus')
             ->with('type', 'success');
     }
 
     /* ===============================
-       STOK (CARA LAMA - REDIRECT)
+       KELOLA STOK (FINAL)
     ================================ */
 
-    public function addStock(Request $request, $id)
+    public function updateStok(Request $request, string $id)
     {
         $request->validate([
-            'jumlah' => 'required|integer|min:1'
-        ]);
-
-        $obat = Obat::findOrFail($id);
-        $obat->increment('stok', $request->jumlah);
-
-        return redirect()->route('obat.index')
-            ->with('message', 'Stok obat berhasil ditambahkan')
-            ->with('type', 'success');
-    }
-
-    public function reduceStock(Request $request, $id)
-    {
-        $request->validate([
-            'jumlah' => 'required|integer|min:1'
+            'tipe'   => 'required|in:tambah,kurang',
+            'jumlah' => 'required|integer|min:1',
         ]);
 
         $obat = Obat::findOrFail($id);
 
-        if ($obat->stok < $request->jumlah) {
-            return redirect()->route('obat.index')
-                ->with('message', 'Stok tidak cukup')
-                ->with('type', 'danger');
-        }
+        if ($request->tipe === 'kurang') {
+            if ($obat->stok < $request->jumlah) {
+                return redirect()->route('obat.index')
+                    ->with('message', 'Stok tidak mencukupi')
+                    ->with('type', 'danger');
+            }
 
-        $obat->decrement('stok', $request->jumlah);
-
-        return redirect()->route('obat.index')
-            ->with('message', 'Stok obat berhasil dikurangi')
-            ->with('type', 'success');
-    }
-
-    /* ===============================
-       STOK (AJAX - TANPA REFRESH)
-    ================================ */
-
-    public function updateStokAjax(Request $request, $id)
-    {
-        $request->validate([
-            'action' => 'required|in:add,reduce'
-        ]);
-
-        $obat = Obat::findOrFail($id);
-
-        if ($request->action === 'reduce' && $obat->stok <= 0) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Stok sudah habis'
-            ], 400);
-        }
-
-        if ($request->action === 'add') {
-            $obat->increment('stok');
+            $obat->decrement('stok', $request->jumlah);
         } else {
-            $obat->decrement('stok');
+            $obat->increment('stok', $request->jumlah);
         }
 
-        return response()->json([
-            'status' => 'success',
-            'stok'   => $obat->stok
-        ]);
+        return redirect()->route('obat.index')
+            ->with('message', 'Stok obat berhasil diperbarui')
+            ->with('type', 'success');
     }
 }

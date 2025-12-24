@@ -1,232 +1,200 @@
 <x-layouts.app title="Data Obat">
     <div class="container-fluid px-4 mt-4">
 
-        <div class="row">
-            <div class="col-lg-12">
-
-                {{-- Alert flash message --}}
-                @if (session('message'))
-                    <div class="alert alert-{{ session('type', 'success') }} alert-dismissible fade show" role="alert">
-                        {{ session('message') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                @endif
-
-                <h1 class="mb-4">Data Obat</h1>
-
-                <a href="{{ route('obat.create') }}" class="btn btn-primary mb-3">
-                    <i class="fas fa-plus"></i> Tambah Obat
-                </a>
-
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle table-hover shadow-sm">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Nama Obat</th>
-                                <th>Kemasan</th>
-                                <th>Harga</th>
-                                <th style="width: 220px;">Stok</th>
-                                <th style="width: 180px;">Aksi</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @forelse ($obats as $obat)
-                                <tr>
-                                    <td>{{ $obat->nama_obat }}</td>
-                                    <td>{{ $obat->kemasan }}</td>
-                                    <td>Rp{{ number_format($obat->harga, 0, ',', '.') }}</td>
-
-                                    {{-- KOLOM STOK (AJAX TANPA REFRESH) --}}
-                                    <td>
-                                        <div class="stok-control" data-id="{{ $obat->id }}">
-
-                                            {{-- Tombol minus --}}
-                                            <button class="stok-btn minus"
-                                                onclick="updateStok(this, 'reduce')"
-                                                {{ $obat->stok == 0 ? 'disabled' : '' }}>
-                                                <i class="fas fa-minus"></i>
-                                            </button>
-
-                                            {{-- Badge stok --}}
-                                            <span class="stok-badge
-                                                {{ $obat->stok == 0
-                                                    ? 'danger'
-                                                    : ($obat->stok <= 5 ? 'warning' : 'normal') }}">
-                                                {{ $obat->stok }}
-                                            </span>
-
-                                            {{-- Tombol plus --}}
-                                            <button class="stok-btn plus"
-                                                onclick="updateStok(this, 'add')">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-
-                                        </div>
-                                    </td>
-
-                                    {{-- KOLOM AKSI --}}
-                                    <td class="text-center">
-                                        <a href="{{ route('obat.edit', $obat->id) }}"
-                                           class="btn btn-warning btn-sm me-1">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
-
-                                        <form action="{{ route('obat.destroy', $obat->id) }}"
-                                              method="POST"
-                                              class="d-inline"
-                                              onsubmit="return confirm('Yakin ingin menghapus?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="btn btn-danger btn-sm">
-                                                <i class="fas fa-trash"></i> Hapus
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-center">
-                                        Tidak ada data obat
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
+        {{-- FLASH MESSAGE (SUKSES / ERROR) --}}
+        @if (session('message'))
+            <div class="alert alert-{{ session('type', 'success') }}">
+                {{ session('message') }}
             </div>
+        @endif
+
+        {{-- ========================= --}}
+        {{-- PERINGATAN STOK OBAT --}}
+        {{-- ========================= --}}
+        @php
+            // Semua obat dengan stok <= 5 (termasuk 0)
+            $stokMenipis = $obats->filter(fn($obat) => $obat->stok <= 5);
+
+            $stokHabis  = $stokMenipis->where('stok', 0)->count();
+            $stokKritis = $stokMenipis->whereBetween('stok', [1, 5])->count();
+        @endphp
+
+        @if ($stokMenipis->count() > 0)
+            <div class="alert alert-warning d-flex align-items-center shadow-sm">
+                <i class="fas fa-exclamation-triangle fs-4 me-3"></i>
+                <div>
+                    <strong>Peringatan Stok Obat!</strong><br>
+
+                    @if ($stokHabis > 0)
+                        <span class="text-danger fw-bold">
+                            {{ $stokHabis }} obat telah habis stok.
+                        </span><br>
+                    @endif
+
+                    @if ($stokKritis > 0)
+ <span>
+    Terdapat {{ $stokKritis }} obat dengan persediaan hampir habis (≤ 5).
+</span><br>
+
+                    @endif
+
+                    <small class="text-muted">
+                        Segera lakukan penambahan stok untuk menghindari gangguan pelayanan.
+                    </small>
+                </div>
+            </div>
+        @endif
+
+        {{-- HEADER --}}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="mb-0">Data Obat</h1>
+            <a href="{{ route('obat.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tambah Obat
+            </a>
+        </div>
+
+        {{-- TABLE --}}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle shadow-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nama Obat</th>
+                        <th>Kemasan</th>
+                        <th>Harga</th>
+                        <th class="text-center" style="width: 140px;">Stok</th>
+                        <th class="text-center" style="width: 120px;">Aksi</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @forelse ($obats as $obat)
+                        <tr>
+                            <td>{{ $obat->nama_obat }}</td>
+                            <td>{{ $obat->kemasan }}</td>
+                            <td>Rp{{ number_format($obat->harga, 0, ',', '.') }}</td>
+
+                            {{-- STOK --}}
+                            <td class="text-center">
+                                <span class="badge fs-6 px-3 py-2
+                                    {{ $obat->stok == 0
+                                        ? 'bg-danger'
+                                        : ($obat->stok <= 5 ? 'bg-warning text-dark' : 'bg-success') }}">
+                                    {{ $obat->stok }}
+                                </span>
+                            </td>
+
+                            {{-- AKSI --}}
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                            type="button"
+                                            data-bs-toggle="dropdown">
+                                        Aksi
+                                    </button>
+
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <button class="dropdown-item"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#stokModal{{ $obat->id }}">
+                                                <i class="fas fa-box me-2 text-info"></i>
+                                                Kelola Stok
+                                            </button>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               href="{{ route('obat.edit', $obat->id) }}">
+                                                <i class="fas fa-edit me-2 text-warning"></i>
+                                                Edit
+                                            </a>
+                                        </li>
+
+                                        <li><hr class="dropdown-divider"></li>
+
+                                        <li>
+                                            <form action="{{ route('obat.destroy', $obat->id) }}"
+                                                  method="POST"
+                                                  onsubmit="return confirm('Yakin ingin menghapus data obat ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="dropdown-item text-danger">
+                                                    <i class="fas fa-trash me-2"></i>
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+
+                        {{-- MODAL KELOLA STOK --}}
+                        <div class="modal fade" id="stokModal{{ $obat->id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <form action="{{ route('obat.stok.update', $obat->id) }}" method="POST">
+                                    @csrf
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Kelola Stok Obat</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <p><strong>{{ $obat->nama_obat }}</strong></p>
+                                            <p class="text-muted">
+                                                Stok saat ini: {{ $obat->stok }} unit
+                                            </p>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Aksi</label>
+                                                <select name="tipe" class="form-select" required>
+                                                    <option value="tambah">Tambah Stok</option>
+                                                    <option value="kurang">Kurangi Stok</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Jumlah</label>
+                                                <input type="number"
+                                                       name="jumlah"
+                                                       class="form-control"
+                                                       min="1"
+                                                       required>
+                                            </div>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="button"
+                                                    class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">
+                                                Batal
+                                            </button>
+                                            <button class="btn btn-primary">
+                                                Simpan
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">
+                                Tidak ada data obat
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 
-    {{-- STYLE UI/UX --}}
+    {{-- HILANGKAN GARIS BAWAH LINK DI ALERT --}}
     <style>
-        .stok-control {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            background: #f8f9fa;
-            padding: 6px 16px;
-            border-radius: 999px;
-            width: fit-content;
-            margin: auto;
-        }
-
-        .stok-badge {
-            min-width: 44px;
-            text-align: center;
-            font-weight: 600;
-            padding: 6px 14px;
-            border-radius: 999px;
-            font-size: 14px;
-        }
-
-        .stok-badge.danger {
-            background: #dc3545;
-            color: #fff;
-        }
-
-        .stok-badge.warning {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .stok-badge.normal {
-            background: #ffffff;
-            color: #212529;
-            border: 1px solid #dee2e6;
-        }
-
-        .stok-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #ffffff;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-            transition: all 0.2s ease;
-        }
-
-        .stok-btn i {
-            font-size: 12px;
-        }
-
-        .stok-btn.plus i {
-            color: #198754;
-        }
-
-        .stok-btn.minus i {
-            color: #dc3545;
-        }
-
-        .stok-btn:hover:not(:disabled) {
-            transform: scale(1.12);
-            background: #f1f1f1;
-        }
-
-        .stok-btn:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
+        .alert a {
+            text-decoration: none !important;
         }
     </style>
-
-    {{-- AUTO HIDE ALERT --}}
-    <script>
-        setTimeout(() => {
-            const alert = document.querySelector('.alert');
-            if (alert) {
-                alert.classList.remove('show');
-                alert.classList.add('fade');
-                setTimeout(() => alert.remove(), 500);
-            }
-        }, 2000);
-    </script>
-
-    {{-- AJAX UPDATE STOK --}}
-    <script>
-        function updateStok(button, action) {
-            const container = button.closest('.stok-control');
-            const id = container.dataset.id;
-            const badge = container.querySelector('.stok-badge');
-            const minusBtn = container.querySelector('.minus');
-
-            fetch(`/admin/obat/${id}/stok/ajax`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ action })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status !== 'success') {
-                    alert(data.message);
-                    return;
-                }
-
-                const stok = data.stok;
-                badge.textContent = stok;
-
-                badge.classList.remove('danger', 'warning', 'normal');
-
-                if (stok === 0) {
-                    badge.classList.add('danger');
-                    minusBtn.disabled = true;
-                } else if (stok <= 5) {
-                    badge.classList.add('warning');
-                    minusBtn.disabled = false;
-                } else {
-                    badge.classList.add('normal');
-                    minusBtn.disabled = false;
-                }
-            })
-            .catch(() => alert('Terjadi kesalahan sistem'));
-        }
-    </script>
-
 </x-layouts.app>

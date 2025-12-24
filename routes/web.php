@@ -2,19 +2,22 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PoliController;
 use App\Http\Controllers\DokterController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\ObatController;
+
 use App\Http\Controllers\Dokter\JadwalPeriksaController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Dokter\PeriksaPasienController;
 use App\Http\Controllers\Dokter\RiwayatPasienController;
 use App\Http\Controllers\Pasien\PoliController as PasienPoliController;
 
-// =========================
-// AUTH
-// =========================
+/*
+|--------------------------------------------------------------------------
+| AUTH
+|--------------------------------------------------------------------------
+*/
 Route::get('/', [AuthController::class, 'showLogin']);
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -22,9 +25,11 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// =========================
-// DOKTER
-// =========================
+/*
+|--------------------------------------------------------------------------
+| DOKTER
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:dokter'])
     ->prefix('dokter')
     ->group(function () {
@@ -34,9 +39,7 @@ Route::middleware(['auth', 'role:dokter'])
 
         Route::resource('jadwal-periksa', JadwalPeriksaController::class);
 
-        // =========================
-        // PERIKSA PASIEN (CARA LAMA)
-        // =========================
+        // PERIKSA PASIEN
         Route::get('/periksa-pasien', [PeriksaPasienController::class, 'index'])
             ->name('periksa-pasien.index');
 
@@ -46,9 +49,7 @@ Route::middleware(['auth', 'role:dokter'])
         Route::post('/periksa-pasien', [PeriksaPasienController::class, 'store'])
             ->name('periksa-pasien.store');
 
-        // =========================
         // RIWAYAT PASIEN
-        // =========================
         Route::get('/riwayat-pasien', [RiwayatPasienController::class, 'index'])
             ->name('dokter.riwayat-pasien.index');
 
@@ -56,10 +57,11 @@ Route::middleware(['auth', 'role:dokter'])
             ->name('dokter.riwayat-pasien.show');
     });
 
-    
-// =========================
-// PASIEN
-// =========================
+/*
+|--------------------------------------------------------------------------
+| PASIEN
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:pasien'])
     ->prefix('pasien')
     ->group(function () {
@@ -74,9 +76,11 @@ Route::middleware(['auth', 'role:pasien'])
             ->name('pasien.daftar.submit');
     });
 
-// =========================
-// ADMIN
-// =========================
+/*
+|--------------------------------------------------------------------------
+| ADMIN
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->group(function () {
@@ -84,21 +88,30 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('admin.dashboard');
 
+        // MASTER DATA
         Route::resource('polis', PoliController::class);
         Route::resource('dokter', DokterController::class);
         Route::resource('pasien', PasienController::class);
         Route::resource('obat', ObatController::class);
 
-        // ===== STOK OBAT =====
+        /*
+        |--------------------------------------------------------------------------
+        | STOK OBAT
+        |--------------------------------------------------------------------------
+        */
 
-        // (LAMA - redirect)
+        // CARA LAMA (REDIRECT) - TIDAK DIHAPUS
         Route::post('/obat/{id}/stok/tambah', [ObatController::class, 'addStock'])
             ->name('obat.stok.add');
 
         Route::post('/obat/{id}/stok/kurangi', [ObatController::class, 'reduceStock'])
             ->name('obat.stok.reduce');
 
-        // (BARU - AJAX)
+        // CARA LAMA (AJAX) - TIDAK DIHAPUS
         Route::post('/obat/{id}/stok/ajax', [ObatController::class, 'updateStokAjax'])
             ->name('obat.stok.ajax');
+
+        // CARA BARU (FINAL - MODAL)
+        Route::post('/obat/{id}/stok', [ObatController::class, 'updateStok'])
+            ->name('obat.stok.update');
     });
